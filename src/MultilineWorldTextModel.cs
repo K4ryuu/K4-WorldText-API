@@ -38,7 +38,7 @@ public class MultilineWorldText : IDisposable
 			switch (placement)
 			{
 				case TextPlacement.Wall:
-					this.Texts.Add(new WorldText(this.Plugin, absOrigin.With(z: absOrigin.Z + currentHeight), absRotation, line));
+					this.Texts.Add(new WorldText(this.Plugin, absOrigin.With(z: absOrigin.Z - currentHeight), absRotation, line));
 					break;
 				case TextPlacement.Floor:
 					if (lastSpanedText?.Entity != null)
