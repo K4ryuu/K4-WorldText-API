@@ -1,0 +1,8 @@
+-- 2024.05.15 - v1.1.0
+
+- feat: Added command to reload the config (css_wt_reload)
+- feat: Added command to check information about worldtext (css_wti)
+- fix: rwt didnt remove the worldtext from cache
+- fix: Block some commands while being dead
+- fix: rwt was able to remove worldtext from other places
+- fix: Dispose worldtexts properly on plugin unload

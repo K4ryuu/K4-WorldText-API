@@ -1,7 +1,6 @@
 using CounterStrikeSharp.API.Modules.Utils;
 using K4ryuuCS2WorldTextAPI;
 using K4WorldTextSharedAPI;
-using Newtonsoft.Json;
 using static K4ryuuCS2WorldTextAPI.Plugin;
 
 public class MultilineWorldText : IDisposable

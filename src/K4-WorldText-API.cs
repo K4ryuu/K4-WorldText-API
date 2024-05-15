@@ -16,7 +16,7 @@ namespace K4ryuuCS2WorldTextAPI
 	public class Plugin : BasePlugin
 	{
 		public override string ModuleName => "CS2 WorldText API";
-		public override string ModuleVersion => "1.0.0";
+		public override string ModuleVersion => "1.1.0";
 		public override string ModuleAuthor => "K4ryuu";
 
 		public static PluginCapability<IK4WorldTextSharedAPI> Capability_SharedAPI { get; } = new("k4-worldtext:sharedapi");
@@ -52,6 +52,8 @@ namespace K4ryuuCS2WorldTextAPI
 		{
 			if (loadedConfigs is not null)
 				SaveConfig();
+
+			multilineWorldTexts.ForEach(multilineWorldText => multilineWorldText.Dispose());
 		}
 
 		public class GameTextAPIHandler : IK4WorldTextSharedAPI
@@ -149,6 +151,12 @@ namespace K4ryuuCS2WorldTextAPI
 				return;
 			}
 
+			if (player.PlayerPawn.Value?.Health <= 0)
+			{
+				command.ReplyToCommand($" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Red}You must be alive to use this command.");
+				return;
+			}
+
 			string placementName = command.GetCommandString.Split(' ')[1];
 
 			TextPlacement? placement;
@@ -196,6 +204,12 @@ namespace K4ryuuCS2WorldTextAPI
 		[RequiresPermissions("@css/root")]
 		public void OnRemoveWorldTextSpawn(CCSPlayerController player, CommandInfo command)
 		{
+			if (player.PlayerPawn.Value?.Health <= 0)
+			{
+				command.ReplyToCommand($" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Red}You must be alive to use this command.");
+				return;
+			}
+
 			var GameRules = Utilities.FindAllEntitiesByDesignerName<CCSGameRulesProxy>("cs_gamerules").FirstOrDefault()?.GameRules;
 
 			if (GameRules is null)
@@ -213,10 +227,53 @@ namespace K4ryuuCS2WorldTextAPI
 			}
 
 			target.Dispose();
-			loadedConfigs?.RemoveAll(config => config.Lines == target.Lines);
+			loadedConfigs?.RemoveAll(config => config.Lines == target.Lines && config.AbsOrigin == target.Texts[0].AbsOrigin.ToString() && config.AbsRotation == target.Texts[0].AbsRotation.ToString());
+			multilineWorldTexts.Remove(target);
 			SaveConfig();
 
 			command.ReplyToCommand($" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Green}WorldText removed!");
+		}
+
+		[ConsoleCommand("css_wt_reload", "Reloads the world text config")]
+		[RequiresPermissions("@css/root")]
+		public void OnWorldTextReload(CCSPlayerController player, CommandInfo command)
+		{
+			multilineWorldTexts.ForEach(multilineWorldText => multilineWorldText.Dispose());
+			multilineWorldTexts.Clear();
+
+			loadedConfigs?.Clear();
+			LoadConfig(Server.MapName);
+
+			command.ReplyToCommand($" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Green}WorldText config has been reloaded!");
+		}
+
+		[ConsoleCommand("css_wti", "Shows informations about nearest world text")]
+		[RequiresPermissions("@css/root")]
+		public void OnWorldTextInfo(CCSPlayerController player, CommandInfo command)
+		{
+			if (player.PlayerPawn.Value?.Health <= 0)
+			{
+				command.ReplyToCommand($" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Red}You must be alive to use this command.");
+				return;
+			}
+
+			MultilineWorldText? target = multilineWorldTexts
+				.Where(multilineWorldText => DistanceTo(multilineWorldText.Texts[0].AbsOrigin, player.PlayerPawn.Value!.AbsOrigin!) < 100)
+				.OrderBy(multilineWorldText => DistanceTo(multilineWorldText.Texts[0].AbsOrigin, player.PlayerPawn.Value!.AbsOrigin!))
+				.FirstOrDefault();
+
+			if (target is null)
+			{
+				command.ReplyToCommand($" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Red}Move closer to the WorldText that you want to get information about.");
+				return;
+			}
+
+			player.PrintToChat($" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Green}WorldText Informations");
+			player.PrintToChat($" {ChatColors.Silver}Placement: {ChatColors.Yellow}{target.placement switch { TextPlacement.Floor => "Floor", TextPlacement.Wall => "Wall", _ => "Unknown" }}");
+			player.PrintToChat($" {ChatColors.Silver}Lines: {ChatColors.Yellow}{target.Texts.Count}");
+			player.PrintToChat($" {ChatColors.Silver}Location: {ChatColors.Yellow}{target.Texts[0].AbsOrigin}");
+			player.PrintToChat($" {ChatColors.Silver}Rotation: {ChatColors.Yellow}{target.Texts[0].AbsRotation}");
+			player.PrintToChat($" {ChatColors.Silver}Saved in config: {ChatColors.Yellow}{(loadedConfigs?.Any(config => config.Lines == target.Lines && config.AbsOrigin == target.Texts[0].AbsOrigin.ToString() && config.AbsRotation == target.Texts[0].AbsRotation.ToString()) ?? false ? "Yes" : "No")}");
 		}
 
 		public int SpawnMultipleLines(CCSPlayerController player, TextPlacement placement, List<TextLine> lines, bool saveConfig = false)
