@@ -8,6 +8,7 @@ using CounterStrikeSharp.API.Modules.Admin;
 using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Utils;
 using K4WorldTextSharedAPI;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 
 namespace K4ryuuCS2WorldTextAPI
@@ -16,7 +17,7 @@ namespace K4ryuuCS2WorldTextAPI
 	public class Plugin : BasePlugin
 	{
 		public override string ModuleName => "CS2 WorldText API";
-		public override string ModuleVersion => "1.2.0";
+		public override string ModuleVersion => "1.2.1";
 		public override string ModuleAuthor => "K4ryuu";
 
 		public static PluginCapability<IK4WorldTextSharedAPI> Capability_SharedAPI { get; } = new("k4-worldtext:sharedapi");
@@ -149,19 +150,32 @@ namespace K4ryuuCS2WorldTextAPI
 			if (!File.Exists(configFilePath))
 				return;
 
-			string json = File.ReadAllText(configFilePath);
-			loadedConfigs = JsonConvert.DeserializeObject<List<WorldTextConfig>>(json) ?? new List<WorldTextConfig>();
-
-			loadedConfigs.ForEach(config =>
+			try
 			{
-				Vector vector = ParseVector(config.AbsOrigin);
-				QAngle qAngle = ParseQAngle(config.AbsRotation);
+				string json = File.ReadAllText(configFilePath);
+				loadedConfigs = JsonConvert.DeserializeObject<List<WorldTextConfig>>(json);
 
-				MultilineWorldText multilineWorldText = new MultilineWorldText(this, config.Lines, fromConfig: true);
-				multilineWorldText.Spawn(vector, qAngle, placement: config.Placement);
+				if (loadedConfigs == null)
+				{
+					Logger.LogWarning($"Failed to deserialize configuration file: {configFilePath}");
+					loadedConfigs = new List<WorldTextConfig>();
+				}
 
-				multilineWorldTexts.Add(multilineWorldText);
-			});
+				foreach (var config in loadedConfigs)
+				{
+					Vector vector = ParseVector(config.AbsOrigin);
+					QAngle qAngle = ParseQAngle(config.AbsRotation);
+
+					MultilineWorldText multilineWorldText = new MultilineWorldText(this, config.Lines, fromConfig: true);
+					multilineWorldText.Spawn(vector, qAngle, placement: config.Placement);
+
+					multilineWorldTexts.Add(multilineWorldText);
+				}
+			}
+			catch (Exception ex)
+			{
+				Logger.LogError($"Error while loading configuration file: {ex.Message}");
+			}
 		}
 
 		public void SaveConfig()

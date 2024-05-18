@@ -1,4 +1,8 @@
--- 2024.05.15 - v1.2.0
+-- 2024.05.18 - v1.2.1
+
+- fix: CPU load and contious crash caused by invalid configurations
+
+-- 2024.05.17 - v1.2.0
 
 - feat: Added JustifyHorizontal to config file and APIs
 - feat: Added JustifyVertical to config file and APIs
