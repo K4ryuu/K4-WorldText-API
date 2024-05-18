@@ -40,9 +40,9 @@ public class WorldText : IDisposable
 		this.Entity.Fullbright = this.Data.FullBright;
 		this.Entity.WorldUnitsPerPx = this.Data.Scale;
 		this.Entity.DepthOffset = 0.0f;
-		this.Entity.JustifyHorizontal = PointWorldTextJustifyHorizontal_t.POINT_WORLD_TEXT_JUSTIFY_HORIZONTAL_CENTER;
-		this.Entity.JustifyVertical = PointWorldTextJustifyVertical_t.POINT_WORLD_TEXT_JUSTIFY_VERTICAL_CENTER;
-		this.Entity.ReorientMode = PointWorldTextReorientMode_t.POINT_WORLD_TEXT_REORIENT_NONE;
+		this.Entity.JustifyHorizontal = this.Data.JustifyHorizontal;
+		this.Entity.JustifyVertical = this.Data.JustifyVertical;
+		this.Entity.ReorientMode = this.Data.ReorientMode;
 
 		this.Entity.Teleport(this.AbsOrigin, this.AbsRotation);
 		this.Entity.DispatchSpawn();

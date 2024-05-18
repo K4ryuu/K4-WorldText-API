@@ -7,7 +7,7 @@ namespace K4WorldTextSharedAPI
 	public enum TextPlacement
 	{
 		Wall,
-		Floor,
+		Floor
 	}
 
 	public class TextLine
@@ -17,6 +17,9 @@ namespace K4WorldTextSharedAPI
 		public int FontSize = 20;
 		public bool FullBright = true;
 		public float Scale = 0.4f;
+		public PointWorldTextJustifyHorizontal_t JustifyHorizontal = PointWorldTextJustifyHorizontal_t.POINT_WORLD_TEXT_JUSTIFY_HORIZONTAL_CENTER;
+		public PointWorldTextJustifyVertical_t JustifyVertical = PointWorldTextJustifyVertical_t.POINT_WORLD_TEXT_JUSTIFY_VERTICAL_CENTER;
+		public PointWorldTextReorientMode_t ReorientMode = PointWorldTextReorientMode_t.POINT_WORLD_TEXT_REORIENT_NONE;
 	}
 
 	public interface IK4WorldTextSharedAPI
@@ -27,6 +30,9 @@ namespace K4WorldTextSharedAPI
 		public int AddWorldTextAtPlayer(CCSPlayerController player, TextPlacement placement, List<TextLine> textLines, bool saveConfig = false);
 		public void UpdateWorldText(int id, TextLine? textLine = null);
 		public void UpdateWorldText(int id, List<TextLine>? textLines = null);
-		public void RemoveWorldText(int id);
+		public void RemoveWorldText(int id, bool removeFromConfig = true);
+		public List<CPointWorldText>? GetWorldTextLineEntities(int id);
+		public void TeleportWorldText(int id, Vector position, QAngle angle, bool modifyConfig = false);
+		public void RemoveAllTemporary();
 	}
 }

@@ -1,3 +1,12 @@
+-- 2024.05.15 - v1.2.0
+
+- feat: Added JustifyHorizontal to config file and APIs
+- feat: Added JustifyVertical to config file and APIs
+- feat: Added ReorientMode to config file and APIs
+- feat: SharedAPI new function to teleport worldtext with the proper line setups
+- feat: SharedAPI remove function now has an optional variable to remove from config or not
+- fix: SharedAPI remove function didnt remove the worldtext properly
+
 -- 2024.05.15 - v1.1.0
 
 - feat: Added command to reload the config (css_wt_reload)

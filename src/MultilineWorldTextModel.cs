@@ -16,13 +16,31 @@ public class MultilineWorldText : IDisposable
 
 	private bool disposed = false;
 
-	public MultilineWorldText(Plugin plugin, List<TextLine> lines, bool save = false)
+	public MultilineWorldText(Plugin plugin, List<TextLine> lines, bool save = false, bool fromConfig = false)
 	{
 		this.Plugin = plugin;
 
 		this.Id = nextId++;
 		this.Lines = lines;
-		this.SaveToConfig = save;
+		this.SaveToConfig = save || fromConfig;
+	}
+
+	public void Teleport(Vector absOrigin, QAngle absRotation, bool modifyConfig = false)
+	{
+		this.Remove();
+
+		if (modifyConfig && this.SaveToConfig)
+		{
+			WorldTextConfig? config = Plugin.loadedConfigs?.FirstOrDefault(c => c.Lines == this.Lines && c.AbsOrigin == this.Texts[0].AbsOrigin.ToString() && c.AbsRotation == this.Texts[0].AbsRotation.ToString());
+			if (config != null)
+			{
+				config.AbsOrigin = absOrigin.ToString();
+				config.AbsRotation = absRotation.ToString();
+				Plugin.SaveConfig();
+			}
+		}
+
+		this.Spawn(absOrigin, absRotation, this.placement);
 	}
 
 	public void Spawn(Vector absOrigin, QAngle absRotation, TextPlacement placement)

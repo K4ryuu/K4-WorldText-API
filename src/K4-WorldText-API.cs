@@ -16,7 +16,7 @@ namespace K4ryuuCS2WorldTextAPI
 	public class Plugin : BasePlugin
 	{
 		public override string ModuleName => "CS2 WorldText API";
-		public override string ModuleVersion => "1.1.0";
+		public override string ModuleVersion => "1.2.0";
 		public override string ModuleAuthor => "K4ryuu";
 
 		public static PluginCapability<IK4WorldTextSharedAPI> Capability_SharedAPI { get; } = new("k4-worldtext:sharedapi");
@@ -95,20 +95,50 @@ namespace K4ryuuCS2WorldTextAPI
 
 			public void UpdateWorldText(int id, List<TextLine>? textLines = null)
 			{
-				MultilineWorldText? multilineWorldText = plugin.multilineWorldTexts.Find(multilineWorldText => multilineWorldText.Id == id);
-				if (multilineWorldText is null)
+				MultilineWorldText? target = plugin.multilineWorldTexts.Find(wt => wt.Id == id);
+				if (target is null)
 					throw new Exception($"WorldText with ID {id} not found.");
 
-				multilineWorldText.Update(textLines);
+				target.Update(textLines);
 			}
 
-			public void RemoveWorldText(int id)
+			public void RemoveWorldText(int id, bool removeFromConfig = true)
 			{
-				MultilineWorldText? multilineWorldText = plugin.multilineWorldTexts.Find(multilineWorldText => multilineWorldText.Id == id);
-				if (multilineWorldText is null)
+				MultilineWorldText? target = plugin.multilineWorldTexts.Find(wt => wt.Id == id);
+				if (target is null)
 					throw new Exception($"WorldText with ID {id} not found.");
 
-				multilineWorldText.Dispose();
+				target.Dispose();
+				plugin.multilineWorldTexts.Remove(target);
+
+				if (removeFromConfig)
+				{
+					plugin.loadedConfigs?.RemoveAll(config => config.Lines == target.Lines && config.AbsOrigin == target.Texts[0].AbsOrigin.ToString() && config.AbsRotation == target.Texts[0].AbsRotation.ToString());
+					plugin.SaveConfig();
+				}
+			}
+
+			public List<CPointWorldText>? GetWorldTextLineEntities(int id)
+			{
+				MultilineWorldText? target = plugin.multilineWorldTexts.Find(wt => wt.Id == id);
+				if (target is null)
+					throw new Exception($"WorldText with ID {id} not found.");
+
+				return target.Texts.Where(t => t.Entity != null).Select(t => t.Entity).Cast<CPointWorldText>().ToList();
+			}
+
+			public void TeleportWorldText(int id, Vector position, QAngle angle, bool modifyConfig = false)
+			{
+				MultilineWorldText? target = plugin.multilineWorldTexts.Find(wt => wt.Id == id);
+				if (target is null)
+					throw new Exception($"WorldText with ID {id} not found.");
+
+				target.Teleport(position, angle, modifyConfig);
+			}
+
+			public void RemoveAllTemporary()
+			{
+				plugin.multilineWorldTexts.Where(wt => !wt.SaveToConfig).ToList().ForEach(multilineWorldText => multilineWorldText.Dispose());
 			}
 		}
 
@@ -127,7 +157,7 @@ namespace K4ryuuCS2WorldTextAPI
 				Vector vector = ParseVector(config.AbsOrigin);
 				QAngle qAngle = ParseQAngle(config.AbsRotation);
 
-				MultilineWorldText multilineWorldText = new MultilineWorldText(this, config.Lines);
+				MultilineWorldText multilineWorldText = new MultilineWorldText(this, config.Lines, fromConfig: true);
 				multilineWorldText.Spawn(vector, qAngle, placement: config.Placement);
 
 				multilineWorldTexts.Add(multilineWorldText);
@@ -227,8 +257,9 @@ namespace K4ryuuCS2WorldTextAPI
 			}
 
 			target.Dispose();
-			loadedConfigs?.RemoveAll(config => config.Lines == target.Lines && config.AbsOrigin == target.Texts[0].AbsOrigin.ToString() && config.AbsRotation == target.Texts[0].AbsRotation.ToString());
 			multilineWorldTexts.Remove(target);
+
+			loadedConfigs?.RemoveAll(config => config.Lines == target.Lines && config.AbsOrigin == target.Texts[0].AbsOrigin.ToString() && config.AbsRotation == target.Texts[0].AbsRotation.ToString());
 			SaveConfig();
 
 			command.ReplyToCommand($" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Green}WorldText removed!");
