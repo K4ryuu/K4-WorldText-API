@@ -1,6 +1,6 @@
 -- 2024.05.18 - v1.2.1
 
-- fix: CPU load and contious crash caused by invalid configurations
+- fix: CPU load and continuous crash caused by invalid configurations
 
 -- 2024.05.17 - v1.2.0
 
