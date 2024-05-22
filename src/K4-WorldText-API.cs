@@ -17,7 +17,7 @@ namespace K4ryuuCS2WorldTextAPI
 	public class Plugin : BasePlugin
 	{
 		public override string ModuleName => "CS2 WorldText API";
-		public override string ModuleVersion => "1.2.1";
+		public override string ModuleVersion => "1.2.2";
 		public override string ModuleAuthor => "K4ryuu";
 
 		public static PluginCapability<IK4WorldTextSharedAPI> Capability_SharedAPI { get; } = new("k4-worldtext:sharedapi");
@@ -51,9 +51,6 @@ namespace K4ryuuCS2WorldTextAPI
 
 		public override void Unload(bool hotReload)
 		{
-			if (loadedConfigs is not null)
-				SaveConfig();
-
 			multilineWorldTexts.ForEach(multilineWorldText => multilineWorldText.Dispose());
 		}
 

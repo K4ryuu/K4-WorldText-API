@@ -101,7 +101,7 @@ public class MultilineWorldText : IDisposable
 			AbsRotation = this.Texts[0].AbsRotation.ToString()
 		};
 
-		WorldTextConfig? existingConfig = Plugin.loadedConfigs?.FirstOrDefault(c => c.Lines.SequenceEqual(config.Lines) && c.Placement == config.Placement);
+		WorldTextConfig? existingConfig = Plugin.loadedConfigs?.FirstOrDefault(c => c.Lines == this.Lines && c.AbsOrigin == this.Texts[0].AbsOrigin.ToString() && c.AbsRotation == this.Texts[0].AbsRotation.ToString());
 		if (existingConfig != null)
 		{
 			existingConfig.Lines = config.Lines;
