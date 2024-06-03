@@ -14,6 +14,9 @@ public class MultilineWorldText : IDisposable
 	public List<WorldText> Texts { get; private set; } = new();
 	public bool SaveToConfig { get; set; }
 
+	public Vector? SpawnOrigin = null;
+	public QAngle? SpawnRotation = null;
+
 	private bool disposed = false;
 
 	public MultilineWorldText(Plugin plugin, List<TextLine> lines, bool save = false, bool fromConfig = false)
@@ -74,6 +77,9 @@ public class MultilineWorldText : IDisposable
 			currentHeight += Math.Max(10, line.FontSize / 3);
 		}
 
+		SpawnOrigin = this.Texts[0].AbsOrigin;
+		SpawnRotation = this.Texts[0].AbsRotation;
+
 		if (this.SaveToConfig)
 			this.SaveConfig();
 	}
@@ -85,7 +91,8 @@ public class MultilineWorldText : IDisposable
 		if (lines != null)
 			this.Lines = lines;
 
-		this.Spawn(this.Texts[0].AbsOrigin, this.Texts[0].AbsRotation, this.placement);
+		if (SpawnOrigin != null && SpawnRotation != null)
+			this.Spawn(SpawnOrigin, SpawnRotation, this.placement);
 
 		if (this.SaveToConfig)
 			this.SaveConfig();

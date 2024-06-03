@@ -1,3 +1,7 @@
+-- 2024.06.04 - v1.2.3
+
+- fix: Update issue for WorldText indexing
+
 -- 2024.05.22 - v1.2.2
 
 - fix: Leaking problem where config made huge file and caused critical CPU load
