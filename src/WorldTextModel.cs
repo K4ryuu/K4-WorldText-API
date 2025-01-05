@@ -1,4 +1,3 @@
-
 using CounterStrikeSharp.API;
 using CounterStrikeSharp.API.Core;
 using CounterStrikeSharp.API.Modules.Utils;
@@ -7,80 +6,79 @@ using K4WorldTextSharedAPI;
 
 public class WorldText : IDisposable
 {
-	public Plugin Plugin;
+    private bool disposed;
+    public Plugin Plugin;
 
-	public CPointWorldText? Entity { get; private set; } = null;
+    public WorldText(Plugin plugin, Vector absOrigin, QAngle absRotation, TextLine data)
+    {
+        Plugin = plugin;
+        AbsOrigin = absOrigin;
+        AbsRotation = absRotation;
+        Data = data;
 
-	public TextLine Data { get; set; }
-	public Vector AbsOrigin { get; set; }
-	public QAngle AbsRotation { get; set; }
+        Spawn();
+    }
 
-	private bool disposed = false;
+    public CPointWorldText? Entity { get; private set; }
 
-	public WorldText(Plugin plugin, Vector absOrigin, QAngle absRotation, TextLine data)
-	{
-		this.Plugin = plugin;
-		this.AbsOrigin = absOrigin;
-		this.AbsRotation = absRotation;
-		this.Data = data;
+    public TextLine Data { get; set; }
+    public Vector AbsOrigin { get; set; }
+    public QAngle AbsRotation { get; set; }
 
-		this.Spawn();
-	}
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
-	public void Spawn()
-	{
-		this.Entity = Utilities.CreateEntityByName<CPointWorldText>("point_worldtext");
-		if (this.Entity is null)
-			throw new Exception("Failed to create point_worldtext Entity.");
+    public void Spawn()
+    {
+        Entity = Utilities.CreateEntityByName<CPointWorldText>("point_worldtext");
+        if (Entity is null)
+            throw new Exception("Failed to create point_worldtext Entity.");
 
-		this.Entity.MessageText = this.Data.Text;
-		this.Entity.Enabled = true;
-		this.Entity.FontSize = this.Data.FontSize;
-		this.Entity.Color = this.Data.Color;
-		this.Entity.Fullbright = this.Data.FullBright;
-		this.Entity.WorldUnitsPerPx = this.Data.Scale;
-		this.Entity.DepthOffset = 0.0f;
-		this.Entity.JustifyHorizontal = this.Data.JustifyHorizontal;
-		this.Entity.JustifyVertical = this.Data.JustifyVertical;
-		this.Entity.ReorientMode = this.Data.ReorientMode;
+        Entity.MessageText = Data.Text;
+        Entity.Enabled = true;
+        Entity.FontSize = Data.FontSize;
+        Entity.Color = Data.Color;
+        Entity.Fullbright = Data.FullBright;
+        Entity.WorldUnitsPerPx = Data.Scale;
+        Entity.DepthOffset = 0.0f;
+        Entity.JustifyHorizontal = Data.JustifyHorizontal;
+        Entity.JustifyVertical = Data.JustifyVertical;
+        Entity.ReorientMode = Data.ReorientMode;
 
-		this.Entity.Teleport(this.AbsOrigin, this.AbsRotation);
-		this.Entity.DispatchSpawn();
-	}
+        Entity.Teleport(AbsOrigin, AbsRotation);
+        Entity.DispatchSpawn();
+    }
 
-	public void Update(TextLine? data = null)
-	{
-		if (this.Entity?.IsValid == true)
-			this.Entity.Remove();
+    public void Update(TextLine? data = null)
+    {
+        if (Entity?.IsValid == true)
+            Entity.Remove();
 
-		if (data != null)
-			this.Data = data;
+        if (data != null)
+            Data = data;
 
-		this.Spawn();
-	}
+        Spawn();
+    }
 
-	public void Remove()
-	{
-		if (this.Entity?.IsValid == true)
-			this.Entity.Remove();
+    public void Remove()
+    {
+        if (Entity?.IsValid == true)
+            Entity.Remove();
 
-		this.Entity = null;
-	}
+        Entity = null;
+    }
 
-	public void Dispose()
-	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+                Remove();
 
-	protected virtual void Dispose(bool disposing)
-	{
-		if (!disposed)
-		{
-			if (disposing)
-				Remove();
-
-			disposed = true;
-		}
-	}
+            disposed = true;
+        }
+    }
 }
