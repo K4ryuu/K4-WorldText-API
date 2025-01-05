@@ -31,18 +31,6 @@ public class Plugin : BasePlugin
         RegisterListener<Listeners.OnMapStart>(LoadConfig);
         RegisterEventHandler((EventRoundStart @event, GameEventInfo info) =>
         {
-            
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            Logger.LogError("Round start");
-            
             // if (loadedConfigs is null)
             //     LoadConfig(Server.MapName);
             
