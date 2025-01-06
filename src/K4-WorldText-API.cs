@@ -17,7 +17,7 @@ namespace K4ryuuCS2WorldTextAPI;
 public class Plugin : BasePlugin
 {
     public string configFilePath = string.Empty;
-    public List<WorldTextConfig>? loadedConfigs;
+    public List<WorldTextConfig> loadedConfigs = new();
     public List<MultilineWorldText> multilineWorldTexts = new();
     public override string ModuleName => "CS2 WorldText API";
     public override string ModuleVersion => "1.2.3";
@@ -33,7 +33,7 @@ public class Plugin : BasePlugin
         {
             // if (loadedConfigs is null)
             //     LoadConfig(Server.MapName);
-            
+
             LoadAssets();
             multilineWorldTexts.ForEach(multilineWorldText => multilineWorldText.Update());
             return HookResult.Continue;
@@ -55,9 +55,9 @@ public class Plugin : BasePlugin
     {
         multilineWorldTexts.ForEach(multilineWorldText => multilineWorldText.Dispose());
         multilineWorldTexts.Clear();
-        loadedConfigs?.Clear();
-        loadedConfigs = null;
+        loadedConfigs.Clear();
     }
+
     public void LoadConfig(string mapName)
     {
         ClearData();
@@ -86,7 +86,7 @@ public class Plugin : BasePlugin
 
     public void LoadAssets()
     {
-        if (loadedConfigs is null) return;
+        //if (loadedConfigs is null) return;
 
         foreach (var config in loadedConfigs)
         {
@@ -102,6 +102,8 @@ public class Plugin : BasePlugin
 
     public void SaveConfig()
     {
+        if (loadedConfigs.Count == 0) return;
+
         var updatedJson = JsonConvert.SerializeObject(loadedConfigs, Formatting.Indented);
         File.WriteAllText(configFilePath, updatedJson);
     }
@@ -118,7 +120,7 @@ public class Plugin : BasePlugin
             return;
         }
 
-        if (player.PlayerPawn.Value?.Health <= 0)
+        if (!player.PawnIsAlive)
         {
             command.ReplyToCommand(
                 $" {ChatColors.Silver}[ {ChatColors.Lime}K4-WorldText {ChatColors.Silver}] {ChatColors.Red}You must be alive to use this command.");
