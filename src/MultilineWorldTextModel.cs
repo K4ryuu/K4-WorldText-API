@@ -1,146 +1,156 @@
 using CounterStrikeSharp.API.Modules.Utils;
 using K4ryuuCS2WorldTextAPI;
 using K4WorldTextSharedAPI;
+using Microsoft.Extensions.Logging;
 using static K4ryuuCS2WorldTextAPI.Plugin;
 
 public class MultilineWorldText : IDisposable
 {
-	private static int nextId = 1;
-	private Plugin Plugin;
+    private static int nextId = 1;
 
-	public int Id { get; }
-	public TextPlacement placement;
-	public List<TextLine> Lines { get; private set; } = new();
-	public List<WorldText> Texts { get; private set; } = new();
-	public bool SaveToConfig { get; set; }
+    private bool disposed;
+    public TextPlacement placement;
+    private readonly Plugin Plugin;
 
-	public Vector? SpawnOrigin = null;
-	public QAngle? SpawnRotation = null;
+    public Vector? SpawnOrigin;
+    public QAngle? SpawnRotation;
 
-	private bool disposed = false;
+    public MultilineWorldText(Plugin plugin, List<TextLine> lines, bool save = false, bool fromConfig = false)
+    {
+        Plugin = plugin;
 
-	public MultilineWorldText(Plugin plugin, List<TextLine> lines, bool save = false, bool fromConfig = false)
-	{
-		this.Plugin = plugin;
+        Id = nextId++;
+        Lines = lines;
+        SaveToConfig = save ;
+    }
 
-		this.Id = nextId++;
-		this.Lines = lines;
-		this.SaveToConfig = save || fromConfig;
-	}
+    public int Id { get; }
+    public List<TextLine> Lines { get; private set; } = new();
+    public List<WorldText> Texts { get; } = new();
+    public bool SaveToConfig { get; set; }
 
-	public void Teleport(Vector absOrigin, QAngle absRotation, bool modifyConfig = false)
-	{
-		this.Remove();
+    public void Dispose()
+    {
+        Dispose(true);
+        GC.SuppressFinalize(this);
+    }
 
-		if (modifyConfig && this.SaveToConfig)
-		{
-			WorldTextConfig? config = Plugin.loadedConfigs?.FirstOrDefault(c => c.Lines == this.Lines && c.AbsOrigin == this.Texts[0].AbsOrigin.ToString() && c.AbsRotation == this.Texts[0].AbsRotation.ToString());
-			if (config != null)
-			{
-				config.AbsOrigin = absOrigin.ToString();
-				config.AbsRotation = absRotation.ToString();
-				Plugin.SaveConfig();
-			}
-		}
+    public void Teleport(Vector absOrigin, QAngle absRotation, bool modifyConfig = false)
+    {
+        Remove();
 
-		this.Spawn(absOrigin, absRotation, this.placement);
-	}
+        if (modifyConfig && SaveToConfig)
+        {
+            var config = Plugin.loadedConfigs?.FirstOrDefault(c =>
+                c.Lines == Lines && c.AbsOrigin == Texts[0].AbsOrigin.ToString() &&
+                c.AbsRotation == Texts[0].AbsRotation.ToString());
+            if (config != null)
+            {
+                config.AbsOrigin = absOrigin.ToString();
+                config.AbsRotation = absRotation.ToString();
+                Plugin.SaveConfig();
+            }
+        }
 
-	public void Spawn(Vector absOrigin, QAngle absRotation, TextPlacement placement)
-	{
-		this.placement = placement;
+        Spawn(absOrigin, absRotation, placement);
+    }
 
-		WorldText? lastSpanedText = null;
+    public void Spawn(Vector absOrigin, QAngle absRotation, TextPlacement placement)
+    {
+        this.placement = placement;
 
-		float currentHeight = 0f;
-		foreach (TextLine line in this.Lines)
-		{
-			switch (placement)
-			{
-				case TextPlacement.Wall:
-					this.Texts.Add(new WorldText(this.Plugin, absOrigin.With(z: absOrigin.Z - currentHeight), absRotation, line));
-					break;
-				case TextPlacement.Floor:
-					if (lastSpanedText?.Entity != null)
-					{
-						string direction = Plugin.EntityFaceToDirection(lastSpanedText.Entity.AbsRotation!.Y - 270);
-						Vector offset = Plugin.GetDirectionOffset(direction, currentHeight);
+        WorldText? lastSpanedText = null;
 
-						lastSpanedText = new WorldText(this.Plugin, absOrigin - offset, absRotation, line);
-					}
-					else
-						lastSpanedText = new WorldText(this.Plugin, absOrigin, absRotation, line);
+        var currentHeight = 0f;
+        foreach (var line in Lines)
+        {
+            switch (placement)
+            {
+                case TextPlacement.Wall:
+                    Texts.Add(new WorldText(Plugin, absOrigin.With(z: absOrigin.Z - currentHeight), absRotation, line));
+                    break;
+                case TextPlacement.Floor:
+                    if (lastSpanedText?.Entity != null)
+                    {
+                        var direction = Plugin.EntityFaceToDirection(lastSpanedText.Entity.AbsRotation!.Y - 270);
+                        var offset = Plugin.GetDirectionOffset(direction, currentHeight);
 
-					this.Texts.Add(lastSpanedText);
-					break;
-			}
-			currentHeight += Math.Max(10, line.FontSize / 3);
-		}
+                        lastSpanedText = new WorldText(Plugin, absOrigin - offset, absRotation, line);
+                    }
+                    else
+                    {
+                        lastSpanedText = new WorldText(Plugin, absOrigin, absRotation, line);
+                    }
 
-		SpawnOrigin = this.Texts[0].AbsOrigin;
-		SpawnRotation = this.Texts[0].AbsRotation;
+                    Texts.Add(lastSpanedText);
+                    break;
+            }
 
-		if (this.SaveToConfig)
-			this.SaveConfig();
-	}
+            currentHeight += Math.Max(10, line.FontSize / 3);
+        }
 
-	public void Update(List<TextLine>? lines = null)
-	{
-		this.Remove();
+        SpawnOrigin = Texts[0].AbsOrigin;
+        SpawnRotation = Texts[0].AbsRotation;
 
-		if (lines != null)
-			this.Lines = lines;
+        if (SaveToConfig)
+            SaveConfig();
+    }
 
-		if (SpawnOrigin != null && SpawnRotation != null)
-			this.Spawn(SpawnOrigin, SpawnRotation, this.placement);
+    public void Update(List<TextLine>? lines = null)
+    {
+        Remove();
 
-		if (this.SaveToConfig)
-			this.SaveConfig();
-	}
+        if (lines != null)
+            Lines = lines;
 
-	private void SaveConfig()
-	{
-		WorldTextConfig config = new WorldTextConfig
-		{
-			Placement = this.placement,
-			Lines = this.Lines,
-			AbsOrigin = this.Texts[0].AbsOrigin.ToString(),
-			AbsRotation = this.Texts[0].AbsRotation.ToString()
-		};
+        if (SpawnOrigin != null && SpawnRotation != null)
+            Spawn(SpawnOrigin, SpawnRotation, placement);
 
-		WorldTextConfig? existingConfig = Plugin.loadedConfigs?.FirstOrDefault(c => c.Lines == this.Lines && c.AbsOrigin == this.Texts[0].AbsOrigin.ToString() && c.AbsRotation == this.Texts[0].AbsRotation.ToString());
-		if (existingConfig != null)
-		{
-			existingConfig.Lines = config.Lines;
-			existingConfig.AbsOrigin = config.AbsOrigin;
-			existingConfig.AbsRotation = config.AbsRotation;
-		}
-		else
-			Plugin.loadedConfigs?.Add(config);
+        if (SaveToConfig)
+            SaveConfig();
+    }
 
-		Plugin.SaveConfig();
-	}
+    private void SaveConfig()
+    {
+        var config = new WorldTextConfig
+        {
+            Placement = placement,
+            Lines = Lines,
+            AbsOrigin = Texts[0].AbsOrigin.ToString(),
+            AbsRotation = Texts[0].AbsRotation.ToString()
+        };
 
-	public void Remove()
-	{
-		if (this.Texts.Count > 0)
-			this.Texts.ForEach(text => text.Remove());
-	}
+        var existingConfig = Plugin.loadedConfigs?.FirstOrDefault(c =>
+            c.Lines == Lines && c.AbsOrigin == Texts[0].AbsOrigin.ToString() &&
+            c.AbsRotation == Texts[0].AbsRotation.ToString());
+        if (existingConfig != null)
+        {
+            existingConfig.Lines = config.Lines;
+            existingConfig.AbsOrigin = config.AbsOrigin;
+            existingConfig.AbsRotation = config.AbsRotation;
+        }
+        else
+        {
+            Plugin.loadedConfigs?.Add(config);
+        }
 
-	public void Dispose()
-	{
-		Dispose(true);
-		GC.SuppressFinalize(this);
-	}
+        Plugin.SaveConfig();
+    }
 
-	protected virtual void Dispose(bool disposing)
-	{
-		if (!disposed)
-		{
-			if (disposing)
-				this.Remove();
+    public void Remove()
+    {
+        if (Texts.Count > 0)
+            Texts.ForEach(text => text.Remove());
+    }
 
-			disposed = true;
-		}
-	}
+    protected virtual void Dispose(bool disposing)
+    {
+        if (!disposed)
+        {
+            if (disposing)
+                Remove();
+
+            disposed = true;
+        }
+    }
 }
